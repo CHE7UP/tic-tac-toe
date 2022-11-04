@@ -1,25 +1,150 @@
-import logo from './logo.svg';
-import './App.css';
 
-function App() {
+import './App.css';
+import React from 'react';
+
+const Square = (props) => {
+
+    return (
+      <button 
+        className="square"
+        onClick={()=>
+ props.onClick()}
+      >
+        {props.value}
+      </button>
+    );
+  }
+
+
+class Board extends React.Component {
+renderSquare (i) {
+  return  (
+    <Square 
+    value={this.props.squares[i]}
+    onClick={() => this.props.onClick(i)}
+    />);
+}
+render() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="board">
+      <div className="board-row">
+        {this.renderSquare(0)}
+        {this.renderSquare(1)}
+        {this.renderSquare(2)}
+      </div>
+      <div className="board-row">
+        {this.renderSquare(3)}
+        {this.renderSquare(4)}
+        {this.renderSquare(5)}
+      </div>
+      <div className="board-row">
+        {this.renderSquare(6)}
+        {this.renderSquare(7)}
+        {this.renderSquare(8)}
+      </div>
     </div>
   );
 }
+}
 
-export default App;
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+class Game extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      history:[{
+        squares: Array(9).fill(null),
+      }],
+      xIsNext: true,
+      stepNumber: 0,
+    };
+  }
+  handleClick(i){
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = 
+    current.squares.slice();
+    if(calculateWinner(squares) || squares[i]){
+      return;
+    }
+    squares[i] = this.state.xIsNext ? 'X' : 'O';
+    this.setState({
+      history : history.concat([{
+        squares: squares,
+      }]),
+      stepNumber: history.length,
+      xIsNext: !this.state.xIsNext,
+    });
+   }
+jumpTo(step){
+  this.setState({
+    stepNumber: step,
+    xIsNext: (step % 2) === 0,
+  })
+}
+
+  render(){
+    const history = this.state.history;
+    const current = history[this.state.stepNumber];
+    const winner = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+      const desc = move ?
+        'Go to move #' + move :
+        'Go to game start';
+      return (
+        <div className="moves"> 
+        <li key={move}>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+        </div>
+      );
+    });
+
+    let status;
+    let name = (winner==='X' ? 'Mayichka!!!' : 'Selychka!!!');
+    if (winner){
+      status = 'Congratulations!!! The Winner is ' + name ;
+    } else{
+      status = 'next move: ' + (this.state.xIsNext ? 'Maya' : 'Selena');
+    }
+
+        return(
+      <div className="game">
+      <div className="game-board">
+        <Board 
+        squares = {current.squares}
+        onClick = {(i) => this.handleClick(i)}
+        />
+      </div>
+      <div className="game-info">
+        <h1>{status}</h1>
+        <ol>{moves}</ol>
+      </div>
+    </div>
+    )
+  }
+}
+
+export default Game;
+
